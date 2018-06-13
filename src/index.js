@@ -42,6 +42,7 @@ export default function websocket(url, protocol) {
           }
 
           if (sinks.length === 0 && ws.readyState === 1) {
+            isConnected = false;
             ws.close();
           }
         }
@@ -52,6 +53,7 @@ export default function websocket(url, protocol) {
       }
     } else if (type === 2) {
       if (ws && ws.readyState === 1) {
+        isConnected = false;
         ws.close();
       }
     } else {
