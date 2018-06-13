@@ -46,10 +46,24 @@ export default function websocket(url, protocol) {
           }
         }
       });
-    } else {
-      if (ws.readyState === 1) {
+    } else if (type === 1) {
+      if (ws && ws.readyState === 1) {
         ws.send(data);
       }
+    } else if (type === 2) {
+      if (ws && ws.readyState === 1) {
+        ws.close();
+      }
+    } else {
+      const source = type;
+
+      source(0, (t, d) => {
+        if (t === 1) {
+          if (ws && ws.readyState === 1) {
+            ws.send(d);
+          }
+        }
+      });
     }
   };
 }
