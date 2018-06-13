@@ -30,9 +30,7 @@ export default function websocket(url, protocol) {
         };
 
         ws.onclose = err => {
-          if (err.wasClean) {
-            sendToSinks(2, err.wasClean ? null : err);
-          }
+          sendToSinks(2, err.wasClean ? null : err);
         };
       }
 
