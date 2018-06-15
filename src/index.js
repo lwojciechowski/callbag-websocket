@@ -1,6 +1,6 @@
 export const websocketFactory = WebSocket => (url, protocol) => {
-  let sinks = [];
-  let isConnected = false;
+  const sinks = [];
+  const buffer = [];
   let ws = null;
 
   function sendToSinks(type, data) {
@@ -13,27 +13,50 @@ export const websocketFactory = WebSocket => (url, protocol) => {
     });
   }
 
+  function sendToWs(data) {
+    if (ws && ws.readyState === 1) {
+      ws.send(data);
+    } else {
+      buffer.push(data);
+    }
+  }
+
+  function connectWs() {
+    if (!ws) {
+      ws = new WebSocket(url, protocol);
+
+      ws.onopen = () => {
+        let data;
+        while ((data = buffer.pop())) {
+          ws.send(data);
+        }
+      };
+
+      ws.onmessage = msg => {
+        sendToSinks(1, msg);
+      };
+
+      ws.onclose = err => {
+        sendToSinks(2, err.wasClean ? null : err);
+      };
+    }
+  }
+
+  function disconnectWs() {
+    if (ws && ws.readyState === 1) {
+      ws.close();
+      ws = null;
+    }
+  }
+
   return (type, data) => {
     if (type === 0) {
+      // Source
       const sink = data;
       sinks.push(sink);
+      connectWs();
 
-      if (!isConnected) {
-        ws = new WebSocket(url, protocol);
-
-        ws.onopen = () => {
-          isConnected = true;
-        };
-
-        ws.onmessage = msg => {
-          sendToSinks(1, msg);
-        };
-
-        ws.onclose = err => {
-          sendToSinks(2, err.wasClean ? null : err);
-        };
-      }
-
+      // Source handshake
       sink(0, t => {
         if (t === 2) {
           const i = sinks.indexOf(sink);
@@ -42,30 +65,26 @@ export const websocketFactory = WebSocket => (url, protocol) => {
           }
 
           if (sinks.length === 0 && ws.readyState === 1) {
-            isConnected = false;
-            ws.close();
+            disconnectWs();
           }
+        }
+      });
+    } else if (typeof type === 'function') {
+      // Sink
+      const source = type;
+
+      // Automatically pull from source
+      source(0, (type, data) => {
+        if (type === 1) {
+          sendToWs(data);
         }
       });
     } else if (type === 1) {
-      if (ws && ws.readyState === 1) {
-        ws.send(data);
-      }
+      // Manually send data
+      sendToWs(data);
     } else if (type === 2) {
-      if (ws && ws.readyState === 1) {
-        isConnected = false;
-        ws.close();
-      }
-    } else if (typeof type === 'function') {
-      const source = type;
-
-      source(0, (t, d) => {
-        if (t === 1) {
-          if (ws && ws.readyState === 1) {
-            ws.send(d);
-          }
-        }
-      });
+      // Manually disconnect
+      disconnectWs();
     }
   };
 };
