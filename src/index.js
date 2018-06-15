@@ -1,4 +1,4 @@
-export default function websocket(url, protocol) {
+export const websocketFactory = WebSocket => (url, protocol) => {
   let sinks = [];
   let isConnected = false;
   let ws = null;
@@ -56,7 +56,7 @@ export default function websocket(url, protocol) {
         isConnected = false;
         ws.close();
       }
-    } else {
+    } else if (typeof type === 'function') {
       const source = type;
 
       source(0, (t, d) => {
@@ -68,4 +68,6 @@ export default function websocket(url, protocol) {
       });
     }
   };
-}
+};
+
+export default /*#__PURE__*/ websocketFactory(WebSocket);
