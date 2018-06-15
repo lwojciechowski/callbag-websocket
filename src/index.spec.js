@@ -76,7 +76,8 @@ describe('fromWebsocket', () => {
 
       expect(close).toHaveBeenCalledTimes(1);
     });
-    it('reconnects to websocket after disconnecting', () => {
+
+    it('connects to websocket with another sink after disconnecting', () => {
       WebSocketMock = jest.fn(function() {
         this.readyState = 1;
         this.close = () => {};
