@@ -1,6 +1,6 @@
 {
   "name": "callbag-websocket",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "👜 Callbag source factory from WebSocket.",
   "main": "dist/callbag-websocket.js",
   "module": "dist/callbag-websocket.es.js",
